@@ -8,9 +8,10 @@ Qwen-IR 是一个面向 All-in-One 图像修复的研究项目：使用 Qwen3-VL
 
 ## 方法总览
 
-![Qwen-IR overall method](docs/assets/method_overview.svg)
+<img width="2333" height="796" alt="image" src="https://github.com/user-attachments/assets/71e5691f-b076-4def-9019-b72a8449cd86" />
 
-图中实线表示当前已经实现或验证的主干，绿色虚线表示最终设计中的 layout 空间路由模块。
+
+图中白底块表示当前已经实现或验证的主干，灰色块表示最终设计中的 layout 空间路由模块。
 
 ## 核心思路
 
