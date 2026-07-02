@@ -2,7 +2,8 @@
 
 Qwen-IR 是一个面向 All-in-One 图像修复的研究项目：使用 Qwen3-VL 将低质量图像解析为结构化退化先验，再以全局语义条件和 layout 驱动的空间专家共同控制 Conditional UNet 恢复主干。
 
-项目当前已经验证了退化类型概率与严重度先验（A3）的有效性；残差预测（R 系列）、全局 layout FiLM（A5.0）和多尺度空间专家（S 系列）正在按消融计划逐步推进。
+项目当前已经验证了退化类型概率与严重度先验（A3）的有效性；  
+残差预测（R 系列）、全局 layout FiLM（A5.0）和多尺度空间专家（S 系列）正在按消融计划逐步推进。
 
 > 研究目标不是让 Qwen 直接生成修复图像，而是让大模型回答“发生了什么退化”，再由专门的图像恢复网络回答“如何修复”。
 
@@ -19,7 +20,8 @@ Qwen-IR 是一个面向 All-in-One 图像修复的研究项目：使用 Qwen3-VL
 
 1. **图像评估**：Qwen3-VL 对 LQ 图像进行视觉语言推理，输出结构化退化描述。
 2. **全局退化理解**：校准后的退化概率与五类严重度编码为 `deg_context`，告诉 UNet“修什么”。
-3. **Layout 空间路由**：layout 属性决定是否调用 depth、segmentation、DoG 等解析专家，告诉 UNet“在哪里修”。
+3. **Confidence修正**：根据模型对退化判断的Confidence，对把握不高的图像进行修正。
+4. **Layout 空间路由**：layout 属性决定是否调用 depth、segmentation、DoG 等解析专家，告诉 UNet“在哪里修”。
 
 ### 图像评估
 
@@ -36,18 +38,14 @@ Qwen-IR 是一个面向 All-in-One 图像修复的研究项目：使用 Qwen3-VL
 
 
 ### 全局退化理解
-
-Qwen 原始 logits 使用训练集拟合的 temperature 进行校准：
-
-severity_5映射为：
-
+图像五种退化严重程度由Qwen直接输出，限定为如下几种描述词，并映射到0-1之间：
 ```text
 none = 0
 mild = 1/3
 moderate = 2/3
 severe / serious = 1
 ```
-calibrated probabilities通过固定main degradation输出token，计算不同退化输出的概率得到。
+calibrated probabilities通过固定main degradation输出token，计算不同退化输出的概率得到。Qwen 原始 logits 使用训练集拟合的 temperature 进行校准。
 当前退化理解流程如下：
 ```text
 [severity_5, calibrated probabilities_5]
@@ -58,25 +56,21 @@ deg_context [B, 512]
 ```
 将deg_context在当前 Conditional UNet 中转换为 degradation prompt，并加到 timestep embedding：
 ```math
-t' = t + \operatorname{Prompt}(z_{deg})
+t' = t + \mathrm{Prompt}(z_{deg})
 ```
 每个 ResBlock 根据 `t'` 产生通道级 scale/shift，从而形成全局退化条件。
 
-### 4. Confidence 的定位
+### Confidence 修正
 
-已经完成的 A4-clean 和 A4-corrupt 表明，将 confidence 用于整个 degradation context 的线性插值会损害正确 prior：
+当前Confidence的计算方法为top前2的calibrated probabilities的差值。
+
+目前已经完成的 A4-clean 和 A4-corrupt 使用如下修正方式：
 
 ```math
 z = c z_{Qwen} + (1-c)z_{unknown}
 ```
-
-因此，该公式不再作为最终主模型的基础条件方式。最终设计保留 A3 的 degradation context，并仅让 confidence 控制可选空间专家：
-
-```math
-F_{out} = F_{base} + c \cdot g_{layout} \cdot F_{expert}
-```
-
-低 confidence 会关闭额外专家，但不会破坏已经验证有效的 A3 主干。
+最终模型在错误例子上有一定提高，但在比例更高的正确例子上降低更明显，导致最终损害了模型性能。  
+后续如何利用仍待探索。
 
 ### Layout 与空间专家
 
