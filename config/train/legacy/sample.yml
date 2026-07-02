@@ -1,0 +1,134 @@
+name: qwen_prompt_sample-qwen-v1
+model: denoising
+gpu_ids: [5]
+use_wandb: true
+wandb_project: MyFusion_AssessTPGD
+device: cuda
+runtime:
+  tokenizers_parallelism: false
+prior_switch:
+  degradation_prior_source: qwen_prompt
+  use_content_prior: false
+  use_struct_prior: true
+sde:
+  max_sigma: 50
+  T: 100
+  schedule: cosine
+  eps: 0.005
+degradation:
+  sigma: 25
+  noise_type: G
+  scale: 4
+datasets:
+  train:
+    name: Train_Dataset
+    mode: MD
+    degradation:
+    - LOL-v2
+    - DehazeFormer
+    - GoPro
+    - Denoising
+    - Rain200L
+    dataroot: /data/chenzt/Dataset/sample/Train
+    lq_dir: null
+    gt_dir: null
+    hidden_dir: null
+    hidden_leaf: features_condition_mnt64_bf16
+    hidden_path: ''
+    hidden_key: condition_hidden
+    image_size: 256
+    batch_size: 15
+    n_workers: 0
+    use_shuffle: true
+    use_flip: true
+    use_rot: true
+    color: RGB
+    qwen_prompt_root: /data/chenzt/Dataset/Qwen3VL/0611_sample
+  val:
+    name: Val_Dataset
+    mode: MD
+    degradation:
+    - LOL-v2
+    - DehazeFormer
+    - GoPro
+    - Denoising
+    - Rain200L
+    dataroot: /data/chenzt/Dataset/sample/Val
+    lq_dir: null
+    gt_dir: null
+    hidden_dir: null
+    hidden_leaf: features_condition_mnt64_bf16
+    hidden_path: ''
+    hidden_key: condition_hidden
+    qwen_prompt_root: /data/chenzt/Dataset/Qwen3VL/0611_sample
+network_G:
+  which_model_G: ConditionalUNet
+  setting:
+    in_nc: 3
+    out_nc: 3
+    nf: 64
+    ch_mult:
+    - 1
+    - 2
+    - 4
+    - 8
+    context_dim: 512
+structure_prior:
+  which_model: StructurePriorModule
+  setting:
+    in_nc: 3
+    base_channels: 16
+    num_blocks: 4
+    token_dim: 128
+    image_size: 128
+    num_latent_tokens: 32
+path:
+  checkpoint_save: /data/chenzt/checkpoints
+  checkpoint_load: ''
+  prior: /data/chenzt/model_weights/tpgd/prior/tpgd_ViT-B-32.pt
+  strict_load: false
+  load_checkpoint: false
+train:
+  optimizer: AdamW
+  lr_G: 0.0001
+  weight_decay_G: 0.0
+  beta1: 0.9
+  beta2: 0.999
+  epochs: 10
+  niter: 0
+  train_backbone: true
+  train_structure_prior: false
+  objective: sde
+  prediction_target: image
+  loss_type: l1
+  weight: 1.0
+  sde_t_start: 1
+  sde_t_end: -1
+  adapter_hidden_dim: 1024
+  adapter_pool: mean
+  adapter_dropout: 0.0
+  random_content_context: false
+  save_full_model: true
+  scheduler:
+    type: cosine
+    min_lr: 1.0e-06
+    t_max: auto
+    step_size: 30000
+    gamma: 0.5
+    milestones:
+    - 50000
+    - 100000
+    warmup:
+      enabled: true
+      steps: 1000
+      start_factor: 0.01
+evaluation:
+  enabled: true
+  every_steps: 0
+  every_epochs: 1
+  batch_size: 15
+  train_max_batches: 10
+  val_max_batches: 20
+logger:
+  print_freq: 10
+  save_checkpoint_freq: 500

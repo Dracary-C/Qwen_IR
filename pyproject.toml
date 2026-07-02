@@ -1,0 +1,27 @@
+[project]
+name = "qwen-ir"
+version = "0.1.0"
+description = "Qwen structured-prior image restoration experiments."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "pillow",
+  "pyyaml",
+  "torch",
+]
+
+[tool.setuptools.packages.find]
+include = ["module*"]
+
+[tool.setuptools.package-data]
+"module.vendor.tpgdiff" = [
+  "LICENSE",
+  "NOTICE.md",
+  "UPSTREAM_REQUIREMENTS.txt",
+  "universal-restoration/**/*.py",
+  "universal-restoration/**/*.yml",
+  "universal-restoration/**/*.yaml",
+  "universal-restoration/**/*.json",
+  "universal-restoration/**/*.gz",
+  "universal-restoration/**/*.pkl",
+]

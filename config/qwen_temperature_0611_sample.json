@@ -1,0 +1,93 @@
+{
+  "schema_version": "qwen_temperature_v1",
+  "temperature": 2.638195618894317,
+  "class_order": [
+    "noise",
+    "blur",
+    "haze",
+    "rain",
+    "low_light"
+  ],
+  "fit_split": "Train",
+  "evaluation_split": "Val",
+  "input_root": "/data/chenzt/Dataset/Qwen3VL/0611_sample",
+  "fit_uses_validation": false,
+  "train": {
+    "raw_temperature_1": {
+      "samples": 1800,
+      "accuracy": 0.9172222222222223,
+      "nll": 0.37807344225232026,
+      "ece_15_equal_width": 0.059477526964863414,
+      "brier": 0.13400890801603807,
+      "error_detection_auroc": 0.9393493469485649,
+      "aurc": 0.010153389995839184,
+      "confidence_quantiles": {
+        "min": 0.37187717491276895,
+        "p10": 0.9636191438838967,
+        "p20": 0.9993627292879428,
+        "p50": 0.9999924031589691,
+        "p80": 0.9999979370143718,
+        "p90": 0.9999987513330323,
+        "max": 0.9999998144607292
+      }
+    },
+    "calibrated": {
+      "samples": 1800,
+      "accuracy": 0.9172222222222223,
+      "nll": 0.22481311415264754,
+      "ece_15_equal_width": 0.026090873555220787,
+      "brier": 0.11108560684370987,
+      "error_detection_auroc": 0.9389509713454119,
+      "aurc": 0.010665585685258773,
+      "confidence_quantiles": {
+        "min": 0.3029934601831226,
+        "p10": 0.7308292026850578,
+        "p20": 0.9278434028915297,
+        "p50": 0.9839873789331792,
+        "p80": 0.9908889564544808,
+        "p90": 0.9933208208195999,
+        "max": 0.9971748198234229
+      }
+    },
+    "first_record": "/data/chenzt/Dataset/Qwen3VL/0611_sample/Train/DehazeFormer/LQ/100.json"
+  },
+  "val": {
+    "raw_temperature_1": {
+      "samples": 200,
+      "accuracy": 0.915,
+      "nll": 0.3293176000520928,
+      "ece_15_equal_width": 0.06756056346322253,
+      "brier": 0.13589097326679433,
+      "error_detection_auroc": 0.9607843137254902,
+      "aurc": 0.00734120681247517,
+      "confidence_quantiles": {
+        "min": 0.4952793736927886,
+        "p10": 0.9868986089482205,
+        "p20": 0.9996260441403001,
+        "p50": 0.9999920197920925,
+        "p80": 0.9999977180789393,
+        "p90": 0.9999987990345391,
+        "max": 0.9999997617629796
+      }
+    },
+    "calibrated": {
+      "samples": 200,
+      "accuracy": 0.915,
+      "nll": 0.2006259421881084,
+      "ece_15_equal_width": 0.043892453220409675,
+      "brier": 0.11078765444458107,
+      "error_detection_auroc": 0.9633558341369335,
+      "aurc": 0.007121215093012044,
+      "confidence_quantiles": {
+        "min": 0.37749248865630164,
+        "p10": 0.7810458130399645,
+        "p20": 0.9447825798237506,
+        "p50": 0.9844957875960418,
+        "p80": 0.9912394775681487,
+        "p90": 0.9930510479713975,
+        "max": 0.9969011636210793
+      }
+    },
+    "first_record": "/data/chenzt/Dataset/Qwen3VL/0611_sample/Val/DehazeFormer/LQ/0058_0.8_0.2.json"
+  }
+}

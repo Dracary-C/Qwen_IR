@@ -1,0 +1,81 @@
+# A4-clean: calibrated Qwen prior with confidence fallback on fixed 5x40.
+name: A4_clean_fixed_tpgdiff_5x40_test
+gpu_ids:
+  - 5
+device: cuda
+
+prior_switch:
+  degradation_prior_source: confidence_gate
+  calibration_path: config/qwen_temperature_0611_sample.json
+  use_content_prior: false
+  use_struct_prior: false
+
+confidence_gate:
+  condition_dropout_probability: 0.0
+  prior_corruption_probability: 0.0
+  confidence_override: null
+
+datasets:
+  val:
+    name: Fixed_TPGDiff_5x40
+    mode: LQGT
+    degradation:
+      - noise
+      - blur
+      - haze
+      - rain
+      - low_light
+    dataroot: /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40
+    lq_dir:
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/targets/noise
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/targets/blur
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/targets/haze
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/targets/rain
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/targets/low_light
+    gt_dir:
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/paired_gt/noise
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/paired_gt/blur
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/paired_gt/haze
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/paired_gt/rain
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/paired_gt/low_light
+    hidden_dir: null
+    hidden_path: ""
+    qwen_prompt_root: /home/chenzt/Experiment/All-in-One/Qwen_IR/dataset/qwen_prior_fixed_tpgdiff_5x40
+    image_size: 256
+    batch_size: 32
+    n_workers: 8
+
+network_G:
+  which_model_G: ConditionalUNet
+  setting:
+    in_nc: 3
+    out_nc: 3
+    nf: 32
+    ch_mult:
+      - 1
+      - 2
+      - 4
+      - 8
+    context_dim: 512
+
+path:
+  # Set this to the trained A4 best.pt, or pass --checkpoint.
+  checkpoint_load: ""
+  base_checkpoint_load: ""
+  prior: ""
+  strict_load: true
+
+test:
+  prior_variant: correct
+  objective: direct_gt
+  prediction_target: image
+  loss_type: l1
+  weight: 1.0
+  direct_gt_time: 0.0
+  boundary_pad: 32
+  batch_size: 32
+  adapter_hidden_dim: 256
+  adapter_pool: mean
+  adapter_dropout: 0.0
+  save_images: true
+  save_dir: log/test_A4_fixed_tpgdiff_5x40_images

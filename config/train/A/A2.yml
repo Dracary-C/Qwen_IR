@@ -1,0 +1,140 @@
+# A2: train-temperature-calibrated Qwen main probabilities only.
+# This keeps the established 1800/200 sample protocol; severity/layout are zeroed.
+name: A2_5task_qwen_probs_256_seed1234
+model: denoising
+gpu_ids:
+  - 4
+use_wandb: true
+wandb_project: MyFusion_AssessTPGD
+device: cuda
+
+runtime:
+  tokenizers_parallelism: false
+
+prior_switch:
+  degradation_prior_source: qwen_probs
+  calibration_path: config/qwen_temperature_0611_sample.json
+  use_content_prior: false
+  use_struct_prior: false
+
+sde:
+  max_sigma: 50
+  T: 100
+  schedule: cosine
+  eps: 0.005
+
+degradation:
+  sigma: 25
+  noise_type: G
+  scale: 4
+
+datasets:
+  train:
+    name: Train_Dataset
+    mode: MD
+    degradation:
+      - LOL-v2
+      - DehazeFormer
+      - GoPro
+      - Denoising
+      - Rain200L
+    dataroot: /data/chenzt/Dataset/sample/Train
+    lq_dir: null
+    gt_dir: null
+    hidden_dir: null
+    hidden_path: ""
+    hidden_key: condition_hidden
+    qwen_prompt_root: /data/chenzt/Dataset/Qwen3VL/0611_sample
+    image_size: 256
+    batch_size: 12
+    n_workers: 8
+    use_shuffle: true
+    use_flip: true
+    use_rot: true
+    color: RGB
+
+  val:
+    name: Val_Dataset
+    mode: MD
+    degradation:
+      - LOL-v2
+      - DehazeFormer
+      - GoPro
+      - Denoising
+      - Rain200L
+    dataroot: /data/chenzt/Dataset/sample/Val
+    lq_dir: null
+    gt_dir: null
+    hidden_dir: null
+    hidden_path: ""
+    hidden_key: condition_hidden
+    qwen_prompt_root: /data/chenzt/Dataset/Qwen3VL/0611_sample
+
+network_G:
+  which_model_G: ConditionalUNet
+  setting:
+    in_nc: 3
+    out_nc: 3
+    nf: 32
+    ch_mult:
+      - 1
+      - 2
+      - 4
+      - 8
+    context_dim: 512
+
+path:
+  checkpoint_save: /data/chenzt/checkpoints
+  checkpoint_load: ""
+  prior: ""
+  strict_load: false
+  load_checkpoint: false
+
+train:
+  manual_seed: 1234
+  optimizer: AdamW
+  lr_G: 1.0e-4
+  weight_decay_G: 0.0
+  beta1: 0.9
+  beta2: 0.999
+  epochs: 0
+  # A2 is the planned 5k screening run.
+  max_steps: 5000
+  train_backbone: true
+  train_structure_prior: false
+  objective: direct_gt
+  prediction_target: image
+  loss_type: l1
+  weight: 1.0
+  direct_gt_time: 0.0
+  sde_t_start: 1
+  sde_t_end: -1
+  adapter_hidden_dim: 256
+  adapter_pool: mean
+  adapter_dropout: 0.0
+  random_content_context: false
+  save_full_model: true
+  scheduler:
+    type: cosine
+    min_lr: 1.0e-6
+    t_max: 3000
+    warmup:
+      enabled: true
+      steps: 100
+      start_factor: 0.01
+
+evaluation:
+  enabled: true
+  every_steps: 250
+  every_epochs: 0
+  batch_size: 48
+  train_sampling:
+    mode: stratified_fixed
+    fraction_per_task: 0.1
+    seed: 1234
+  train_max_batches: 0
+  val_max_batches: 0
+
+logger:
+  print_freq: 10
+  save_checkpoint_freq: 1000

@@ -1,0 +1,61 @@
+name: ablation-fast-infer
+suffix: ~
+model: denoising
+distortion: ['Synthetic', 'Real_captured']
+gpu_ids: [0]
+
+prior_switch:
+  use_deg_prior: true
+  use_content_prior: true
+  use_struct_prior: false
+
+sde:
+  max_sigma: 50
+  T: 100
+  schedule: cosine
+  eps: 0.005
+  sampling_mode: posterior
+
+degradation:
+  sigma: 25
+  noise_type: G
+  scale: 4
+
+datasets:
+  test1:
+    name: Test
+    mode: LQGT
+    dataroot_GT: ~
+    dataroot_LQ: ~
+
+network_G:
+  which_model_G: ConditionalUNet
+  setting:
+    in_nc: 3
+    out_nc: 3
+    nf: 32
+    ch_mult: [1, 2, 4]
+    context_dim: 512
+    struct_context_dim: 256
+    use_degra_context: true
+    use_image_context: true
+    use_struct_context: false
+
+structure_prior:
+  which_model: StructurePriorModule
+  setting:
+    in_nc: 3
+    base_channels: 16
+    num_blocks: 4
+    token_dim: 128
+    image_size: 128
+    num_latent_tokens: 32
+
+path:
+  pretrain_model_G: /data/chenzt/model_weights/tpgd/universal/ablation-d1-c1-s1/latest_G.pth
+  strict_load: true
+  prior: /data/chenzt/model_weights/tpgd/prior/tpgd_ViT-B-32.pt
+  tpgd: /data/chenzt/model_weights/tpgd/prior/tpgd_ViT-B-32.pt
+
+logger:
+  print_freq: 200

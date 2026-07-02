@@ -1,0 +1,101 @@
+#### fast/debug settings
+name: ablation-fast
+use_tb_logger: true
+model: denoising
+distortion: ['Synthetic','Real_captured']
+gpu_ids: [4]
+
+prior_switch:
+  use_deg_prior: true
+  use_content_prior: true
+  use_struct_prior: false
+
+sde:
+  max_sigma: 50
+  T: 100
+  schedule: cosine
+  eps: 0.005
+
+degradation:
+  sigma: 25
+  noise_type: G
+  scale: 4
+
+#### datasets
+datasets:
+  train:
+    name: Train_Dataset
+    mode: MD
+    dataroot: /data/chenzt/Dataset/TPGDiff/Train
+    use_shuffle: true
+    n_workers: 6
+    batch_size: 8
+    patch_size: 128
+    use_flip: true
+    use_rot: true
+    color: RGB
+  val:
+    name: Val_Dataset
+    mode: MD
+    dataroot: /data/chenzt/Dataset/TPGDiff/Val
+
+#### network structures
+network_G:
+  which_model_G: ConditionalUNet
+  setting:
+    in_nc: 3
+    out_nc: 3
+    nf: 32
+    ch_mult: [1, 2, 4]
+    context_dim: 512
+    struct_context_dim: 256
+    use_degra_context: true
+    use_image_context: true
+    use_struct_context: false
+
+structure_prior:
+  which_model: StructurePriorModule
+  setting:
+    in_nc: 3
+    base_channels: 16
+    num_blocks: 4
+    token_dim: 128
+    image_size: 128
+    num_latent_tokens: 32
+
+ddp:
+  find_unused_parameters: true
+
+#### path
+path:
+  pretrain_model_G: ~
+  strict_load: true
+  resume_state: ~
+  prior: /data/chenzt/model_weights/tpgd/prior/tpgd_ViT-B-32.pt
+
+#### training settings
+train:
+  optimizer: AdamW
+  lr_G: !!float 1e-4
+  lr_scheme: TrueCosineAnnealingLR
+  beta1: 0.9
+  beta2: 0.999
+  niter: 10000
+  warmup_iter: 1000
+  lr_steps: [100000, 200000, 300000, 400000, 500000, 600000]
+  lr_gamma: 0.5
+  eta_min: !!float 1e-6
+
+  is_weighted: False
+  loss_type: l1
+  weight: 1.0
+
+  manual_seed: 0
+  val_freq: !!float 2000
+
+#### logger
+logger:
+  print_freq: 200
+  save_checkpoint_freq: !!float 5000
+  profile_timing: false
+  profile_interval: 200

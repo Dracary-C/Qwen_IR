@@ -1,0 +1,112 @@
+runtime:
+  gpu: '1'
+model:
+  name_or_path: /data/chenzt/model_weights/Qwen3-VL-8B-Instruct
+  cache_dir: /data/chenzt/model_weights/huggingface_cache
+  attn: flash_attention_2
+  device_map: auto
+data:
+  fixed_manifest: dataset/fixed_tpgdiff_5x40/manifest.json
+  root: /data/chenzt/Dataset/TPGDiff
+  target_split: Val
+  lq_subdir: LQ
+  classes:
+  - GoPro
+  - Denoising
+  - LOL-v2
+  - DehazeFormer
+  - Rain200L
+sampling:
+  samples_per_class: 40
+  seed: 20260608
+  shuffle_targets: true
+inference:
+  mode: both
+  max_pixels: 200704
+  max_new_tokens: 512
+  dry_run: false
+output:
+  dir: log/qwen_prompt_iters/iter17_layout_prior_5x40
+fewshot_examples:
+- image: module/qwen/fewshot_examples/example_01.png
+  output:
+    noise: none
+    blur: moderate
+    haze: none
+    rain: none
+    low_light: none
+    main_degradation: blur
+    degradation_distribution: uniform
+    degradation_position:
+    - object boundaries
+    - background contours
+    - fine texture edges
+    confidence: high
+- image: module/qwen/fewshot_examples/example_02.png
+  output:
+    noise: serious
+    blur: none
+    haze: none
+    rain: none
+    low_light: none
+    main_degradation: noise
+    degradation_distribution: uniform
+    degradation_position:
+    - smooth surface areas
+    - shadowed object surfaces
+    - low-texture background
+    confidence: high
+- image: module/qwen/fewshot_examples/example_03.png
+  output:
+    noise: none
+    blur: none
+    haze: none
+    rain: none
+    low_light: serious
+    main_degradation: low_light
+    degradation_distribution: uniform
+    degradation_position:
+    - underexposed foreground objects
+    - shadowed background details
+    confidence: high
+- image: module/qwen/fewshot_examples/example_04.jpg
+  output:
+    noise: none
+    blur: none
+    haze: serious
+    rain: none
+    low_light: none
+    main_degradation: haze
+    degradation_distribution: uniform
+    degradation_position:
+    - distant background
+    - skyline or building contours
+    - low-contrast depth regions
+    confidence: high
+- image: module/qwen/fewshot_examples/example_05.png
+  output:
+    noise: none
+    blur: none
+    haze: none
+    rain: serious
+    low_light: none
+    main_degradation: rain
+    degradation_distribution: non_uniform
+    degradation_position:
+    - visible rain streaks
+    - foreground subject occlusions
+    - background streak lines
+    confidence: high
+prompt:
+  system_intro: You are a strict image degradation layout annotator. Use the anonymous
+    reference images and JSON outputs to calibrate degradation severity and spatial
+    layout attributes. Ignore filenames and paths. Judge visual evidence only, and
+    output only the final JSON object.
+  target_instruction: Now analyze the target image by comparing visible artifacts
+    with the anonymous references. Judge all five degradation severities and the ten
+    boolean degradation_layout attributes from visual evidence only.
+  change_summary: 'Iter17: run the latest IR-prior table schema from iter16 on the
+    fixed 5x40 TPGDiff set. Qwen generates severity_5 and degradation_layout_10; condition_score
+    provides degradation_probs_5 and probability_margin; evaluation adds main-degradation
+    accuracy, margin-error matching, structure validation, and severity-degradation
+    matching metrics.'

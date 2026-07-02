@@ -1,0 +1,24 @@
+# Install torch and torchvision separately according to your CUDA version.
+accelerate
+diffusers
+easydict
+einops
+ema-pytorch
+huggingface-hub>=0.23.2,<1.0
+lpips
+numpy
+omegaconf
+opencv-python
+peft
+pillow
+pyyaml
+qwen-vl-utils
+safetensors
+scikit-image
+scipy
+sentence-transformers
+streamlit
+timm
+tqdm
+transformers==4.45.2
+wandb

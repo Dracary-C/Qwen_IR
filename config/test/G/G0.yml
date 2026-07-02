@@ -1,0 +1,49 @@
+name: plain_unet_lowlight_5x40_test
+gpu_ids:
+- 7
+device: cuda
+
+prior_switch:
+  degradation_prior_source: none
+  use_content_prior: false
+  use_struct_prior: false
+
+datasets:
+  test:
+    name: Fixed_LowLight_5x40
+    mode: LQGT
+    lq_dir: /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/targets/low_light
+    gt_dir: /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/paired_gt/low_light
+    image_size: 256
+    batch_size: 4
+    n_workers: 0
+
+network_G:
+  which_model_G: ConditionalUNet
+  setting:
+    in_nc: 3
+    out_nc: 3
+    nf: 64
+    ch_mult:
+    - 1
+    - 2
+    - 4
+    - 8
+    context_dim: 512
+
+path:
+  checkpoint_load: /data/chenzt/checkpoints/20260630_004042_plain_unet_lolv2_direct_gt_2/latest.pt
+  base_checkpoint_load: ''
+  prior: ''
+  strict_load: true
+
+test:
+  objective: direct_gt
+  prediction_target: image
+  loss_type: l1
+  weight: 1.0
+  direct_gt_time: 0.0
+  boundary_pad: 32
+  batch_size: 4
+  save_images: true
+  save_dir: log/plain_unet_lowlight_10k_5x40_images

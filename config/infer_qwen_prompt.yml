@@ -1,0 +1,72 @@
+name: qwen-ir-qwen-prompt-infer
+gpu_ids:
+- 5
+run:
+  mode: qwen_prompt
+  checkpoint: null
+  device: null
+runtime:
+  tokenizers_parallelism: false
+fusion:
+  resize: 256
+  device: cuda
+  sampling_mode: posterior
+  image_range: minus_one_one
+paths:
+  input: /data/chenzt/Dataset/sample/Train/GoPro/LQ/GOPR0372_07_00__000060.png
+  qwen_prompt_output_dir: log/qwen_prompt_run
+  tpgd_options: module/vendor/tpgdiff/universal-restoration/config/tpgd-sde/options/test_fast.yml
+  tpgd_checkpoint: /data/chenzt/model_weights/tpgd/universal/ablation-d1-c1-s1/latest_G.pth
+  tpgd_prior: /data/chenzt/model_weights/tpgd/prior/tpgd_ViT-B-32.pt
+  assess_tpgd_checkpoint: /data/chenzt/checkpoints/20260612_050008_structured-prior-sample-qwen-v1-continue10/latest.pt
+commands:
+  python: python
+prior_switch:
+  degradation_prior_source: qwen_prompt
+  use_content_prior: false
+  use_struct_prior: true
+qwen_prompt:
+  online: true
+  gpu: 6
+  config: config/tpgdiff_fewshot_qwen3vl.yml
+  export_script: module/qwen/export_tpgdiff_qwen_structured_dataset.py
+  output_root: /data/chenzt/Dataset/Qwen3VL/tmp_test/myfusion_qwen_prompt
+  overwrite: false
+sde:
+  max_sigma: 50
+  T: 100
+  schedule: cosine
+  eps: 0.005
+degradation:
+  sigma: 25
+  noise_type: G
+  scale: 4
+network_G:
+  which_model_G: ConditionalUNet
+  setting:
+    in_nc: 3
+    out_nc: 3
+    nf: 64
+    ch_mult:
+    - 1
+    - 2
+    - 4
+    - 8
+    context_dim: 512
+    use_struct_context: true
+    struct_context_dim: 128
+structure_prior:
+  which_model: StructurePriorModule
+  setting:
+    in_nc: 3
+    base_channels: 16
+    num_blocks: 4
+    token_dim: 128
+    image_size: 128
+    num_latent_tokens: 32
+path:
+  strict_load: false
+test:
+  adapter_hidden_dim: 1024
+  adapter_pool: mean
+  adapter_dropout: 0.0

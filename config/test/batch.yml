@@ -1,0 +1,151 @@
+# Batch PSNR/SSIM evaluation configuration.
+name: qwen-ir-batch-test
+gpu_ids: [5]
+
+run:
+  mode: assess_batch
+  split: val
+  batch_size: ~
+  max_batches: 0
+  checkpoint: ~
+  output_json: ~
+  device: ~
+
+runtime:
+  tokenizers_parallelism: false
+
+commands:
+  python: /home/chenzt/anaconda3/envs/rar/bin/python
+
+prior_switch:
+  degradation_prior_source: qwen_prompt
+  use_content_prior: false
+  use_struct_prior: true
+
+qwen_prompt:
+  online: true
+  gpu: 6
+  config: config/tpgdiff_fewshot_qwen3vl.yml
+  export_script: module/qwen/export_tpgdiff_qwen_structured_dataset.py
+  output_root: /data/chenzt/Dataset/Qwen3VL/0611_sample
+  overwrite: false
+
+sde:
+  max_sigma: 50
+  T: 100
+  schedule: cosine
+  eps: 0.005
+
+degradation:
+  sigma: 25
+  noise_type: G
+  scale: 4
+
+datasets:
+  train:
+    name: Train_Dataset
+    mode: MD
+    degradation: ["LOL-v2", "DehazeFormer", "GoPro", "Denoising", "Rain200L"]
+    dataroot: /data/chenzt/Dataset/sample/Train
+    lq_dir: ~
+    gt_dir: ~
+    hidden_dir: ~
+    hidden_leaf: features_condition_mnt64_bf16
+    hidden_path: ""
+    hidden_key: condition_hidden
+    image_size: 256
+    batch_size: 32
+    n_workers: 0
+    qwen_prompt_root: /data/chenzt/Dataset/Qwen3VL/0611_sample
+  val:
+    name: Fixed_TPGDiff_5x40
+    mode: LQGT
+    degradation: ["noise", "blur", "haze", "rain", "low_light"]
+    dataroot: /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40
+    lq_dir:
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/targets/noise
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/targets/blur
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/targets/haze
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/targets/rain
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/targets/low_light
+    gt_dir:
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/paired_gt/noise
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/paired_gt/blur
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/paired_gt/haze
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/paired_gt/rain
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/paired_gt/low_light
+    hidden_dir: ~
+    hidden_leaf: features_condition_mnt64_bf16
+    hidden_path: ""
+    hidden_key: condition_hidden
+    image_size: 256
+    batch_size: 4
+    n_workers: 0
+    qwen_prompt_root: /data/chenzt/Dataset/Qwen3VL/0611_sample
+  test:
+    name: Fixed_TPGDiff_5x40
+    mode: LQGT
+    degradation: ["noise", "blur", "haze", "rain", "low_light"]
+    dataroot: /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40
+    lq_dir:
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/targets/noise
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/targets/blur
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/targets/haze
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/targets/rain
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/targets/low_light
+    gt_dir:
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/paired_gt/noise
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/paired_gt/blur
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/paired_gt/haze
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/paired_gt/rain
+      - /home/chenzt/Experiment/All-in-One/qwen-VL3/data/fixed_tpgdiff_5x40/paired_gt/low_light
+    hidden_dir: ~
+    hidden_leaf: features_condition_mnt64_bf16
+    hidden_path: ""
+    hidden_key: condition_hidden
+    image_size: 256
+    batch_size: 4
+    n_workers: 0
+    qwen_prompt_root: /data/chenzt/Dataset/Qwen3VL/0611_sample
+
+network_G:
+  which_model_G: ConditionalUNet
+  setting:
+    in_nc: 3
+    out_nc: 3
+    nf: 64
+    ch_mult: [1, 2, 4, 8]
+    context_dim: 512
+    use_struct_context: true
+    struct_context_dim: 128
+
+structure_prior:
+  which_model: StructurePriorModule
+  setting:
+    in_nc: 3
+    base_channels: 16
+    num_blocks: 4
+    token_dim: 128
+    image_size: 128
+    num_latent_tokens: 32
+
+path:
+  checkpoint_load: /data/chenzt/checkpoints/20260612_050008_structured-prior-sample-qwen-v1-continue10/latest.pt
+  base_checkpoint_load: /data/chenzt/model_weights/tpgd/universal/ablation-d1-c1-s1/latest_G.pth
+  tpgd_options: module/vendor/tpgdiff/universal-restoration/config/tpgd-sde/options/train_fast.yml
+  prior: /data/chenzt/model_weights/tpgd/prior/tpgd_ViT-B-32.pt
+  strict_load: false
+
+test:
+  objective: sde
+  prediction_target: image
+  loss_type: l1
+  weight: 1.0
+  sde_t_start: 1
+  sde_t_end: -1
+  adapter_hidden_dim: 1024
+  adapter_pool: mean
+  adapter_dropout: 0.0
+  batch_size: 4
+  image_size: 256
+  n_workers: 0
